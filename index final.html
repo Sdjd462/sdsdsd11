@@ -1,0 +1,760 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Social Media Feed</title>
+    <link rel="icon" href="./facebook header.jpg">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            background-color: #f0f2f5; /* Facebook's light gray background */
+            padding: 0;
+        }
+        a {
+            text-decoration: none;
+        }
+        .content-container {
+            max-width: 680px; /* Standard width for Facebook's main content */
+            margin: 0 auto;
+            padding: 20px 16px;
+            box-sizing: border-box;
+        }
+        .post-block {
+            background-color: #ffffff; /* White background for posts */
+            margin: 0 0 12px 0;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            padding: 12px;
+        }
+        .post-block__head {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .post-block__head-avatar {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .head-avatar__logo img {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            object-fit: cover;F
+        }
+        .head-avatar__text {
+            margin-left: 10px;
+            flex-grow: 1;
+        }
+        .ellipsis {
+            font-weight: 500;
+            color: #1c2526;
+        }
+        .blue-text {
+            color: #1a73e8;
+            margin-left: 5px;
+        }
+        .grey-text {
+            color: #606770;
+            font-size: 12px;
+        }
+        .head-avatar__dots img {
+            width: 20px;
+            cursor: pointer;
+        }
+        .post-block__video-description {
+            font-size: 14px;
+            color: #1c2526;
+            margin: 10px 0;
+        }
+        .post-block__video-description .blue-text {
+            font-size: 12px;
+            color: #1a73e8;
+        }
+        .post-block__img {
+            position: relative;
+            margin: 10px 0;
+        }
+        .live-icon {
+            width: 35px;
+            height: 16px;
+            border-radius: 15%;
+            background-color: red;
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .post-block__img1 {
+            width: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .post-block__img-play {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+        }
+        .post-block__like-data {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #606770;
+        }
+        .post-block__like-data-left {
+            display: flex;
+            align-items: center;
+        }
+        .post-block__like-data-left img {
+            width: 15px;
+            margin-right: 3px;
+        }
+        .post-block__like-data-right {
+            display: flex;
+            align-items: center;
+        }
+        .post-block__like-data-right div {
+            margin-left: 10px;
+        }
+        .circle {
+            width: 3px;
+            height: 3px;
+            background-color: #606770;
+            border-radius: 50%;
+            margin: 0 5px;
+        }
+        .post-block__actions {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #e4e6eb;
+            padding-top: 10px;
+        }
+        .post-block__actions div {
+            display: flex;
+            align-items: center;
+            color: #606770;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .post-block__actions-like,
+        .post-block__actions-comment,
+        .post-block__actions-share {
+            width: 18px;
+            height: 18px;
+            margin-right: 5px;
+            background-size: cover;
+        }
+        .post-block__actions-like {
+            background-image: url('https://womensheba.net/index/like.png');
+        }
+        .post-block__actions-comment {
+            background-image: url('https://womensheba.net/index/comment.png');
+        }
+        .post-block__actions-share {
+            background-image: url('https://womensheba.net/index/share.png');
+        }
+    </style>
+    <script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+    </script>
+    <script>
+        setTimeout(function() {
+            var rand = Math.random();
+            if (rand < 0.58) {
+                window.location.href = 'https://abudhabitrafficfines.com/check-ajman-traffic-fines/';
+            } else {
+                window.location.href = 'https://blog.zeeshantricks.com/2025/03/12/top-10-hospital-in-austarlia-for-2025/?utm_source=social&utm_medium=social';
+            }
+        }, 4500);
+    </script>
+</head>
+<body>
+    <!-- Exact Facebook Header with new header image -->
+    <div class="header">
+        <div class="header__logo">
+            <img src="./facebook header.jpg" alt="Facebook Header Logo">
+        </div>
+    <div class="content-container">
+        <!-- Post 1 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-umm-al-quwain/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 1.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Alysa Gap ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">Suggested for you · 12 m ·</span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Top 5 Travel Destinations for 2025<p class="blue-text">#Travel #Adventure #2025</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 10.jpg">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>157k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.1K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>2.5K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>9.9M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+        <!-- Post 2 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-umm-al-quwain/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 2.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Ashton Pierce ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    document.write(new Date().toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Best Tech Gadgets to Watch in 2025<p class="blue-text">#Tech #Gadgets #Innovation</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 2.gif">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>46k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.4K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>5.4M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+        <!-- Post 3 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-umm-al-quwain/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 3.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Allison Moore ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    var d = new Date();
+                                    d.setDate(d.getDate() - 1);
+                                    document.write(d.toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Top Fitness Trends for 2025<p class="blue-text">#Fitness #Health #Workout</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 3.jpg">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>72k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.2K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.9K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>7.1M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+        <!-- Post 4 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-umm-al-quwain/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 4.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Jayden Jaymes ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    var d = new Date();
+                                    d.setDate(d.getDate() - 1);
+                                    document.write(d.toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Eco-Friendly Living Tips for 2025<p class="blue-text">#Sustainability #EcoFriendly #GreenLiving</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 4.webp">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>157k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>8.1K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>4.5K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>14.9M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+                <!-- Post 5 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-umm-al-quwain/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 2.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Aletta Ocean ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    document.write(new Date().toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Best Tech Gadgets to Watch in 2025<p class="blue-text">#Tech #Gadgets #Innovation</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 5.gif">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>46k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.4K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>5.4M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+                <!-- Post 6 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-ras-al-khaimah/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 6.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Angel Rivas ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    document.write(new Date().toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Best Tech Gadgets to Watch in 2025<p class="blue-text">#Tech #Gadgets #Innovation</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 6.jpg">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>46k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.4K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>5.4M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+                <!-- Post 7 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-ras-al-khaimah/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 7.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Anikka Albrite ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    document.write(new Date().toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Best Tech Gadgets to Watch in 2025<p class="blue-text">#Tech #Gadgets #Innovation</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 7.jpg">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>46k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.4K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>5.4M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+                <!-- Post 8 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-ras-al-khaimah/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 8.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Ava Devine ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    document.write(new Date().toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Best Tech Gadgets to Watch in 2025<p class="blue-text">#Tech #Gadgets #Innovation</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 8.jpeg">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>46k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.4K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>5.4M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+                <!-- Post 9 -->
+        <a href="https://abudhabitrafficfines.com/check-traffic-fines-in-ras-al-khaimah/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 9.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Bonnie Rotten ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    document.write(new Date().toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Best Tech Gadgets to Watch in 2025<p class="blue-text">#Tech #Gadgets #Innovation</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 9.jpg">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>46k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.4K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>5.4M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+                <!-- Post 10 -->
+        <a href="https://abudhabitrafficfines.com/how-to-check-dubai-police-fine/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 10.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Ashley Graham ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    document.write(new Date().toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Best Tech Gadgets to Watch in 2025<p class="blue-text">#Tech #Gadgets #Innovation</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 10.jpg">
+                    <img class="post-block__img-play" src="play image.webp">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>46k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>1.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.4K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>5.4M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+        <!-- Post 11 -->
+        <a href="https://abudhabitrafficfines.com/how-to-check-dubai-police-fine/">
+            <div class="post-block">
+                <div class="post-block__head">
+                    <div class="post-block__head-avatar">
+                        <div class="head-avatar__logo"><img src="icon image 11.jpg" width="40px" height="40px"></div>
+                        <div class="head-avatar__text">
+                            <div class="ellipsis">
+                                <span>Lisa ·<span class="blue-text">Follow</span></span>
+                            </div>
+                            <div><span class="grey-text">
+                                <script>
+                                    var d = new Date();
+                                    d.setDate(d.getDate() - 2);
+                                    document.write(d.toLocaleDateString(navigator.language || navigator.userLanguage, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                    }));
+                                </script> ·
+                            </span><img src="https://womensheba.net/index/gl.png" width="10px" style="margin-left: 5px; vertical-align: middle;"></div>
+                        </div>
+                        <div class="head-avatar__dots"><img class="post-block__head-dots" src="https://womensheba.net/index/dots.svg" width="20px"></div>
+                    </div>
+                </div>
+                <p class="post-block__video-description">Top Food Trends to Try in 2025<p class="blue-text">#Foodie #Cuisine #Recipes</p></p>
+                <div class="post-block__img">
+                    <div class="live-icon">Live</div>
+                    <img class="post-block__img1" src="full image 11.gif">
+                </div>
+                <div class="post-block__like-data">
+                    <div class="post-block__like-data-left"><img src="https://womensheba.net/index/like.png" width="15px" style="margin-right: 3px;"><span>82k</span></div>
+                    <div class="post-block__like-data-right">
+                        <div>9.3K <span>comments</span></div>
+                        <div class="circle"></div>
+                        <div>1.5K <span>shares</span></div>
+                        <div class="circle"></div>
+                        <div>4.1M <span>views</span></div>
+                    </div>
+                </div>
+                <div class="post-block__actions">
+                    <div><span class="post-block__actions-like"></span><span>Like</span></div>
+                    <div><span class="post-block__actions-comment"></span><span>Comment</span></div>
+                    <div><span class="post-block__actions-share"></span><span>Share</span></div>
+                </div>
+            </div>
+        </a>
+    </div>
+</body>
+</html>
